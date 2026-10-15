@@ -89,7 +89,9 @@ export const TaskCard = memo(function TaskCard({ task, config, targetDate, onCli
 		// 有任务状态（含已完成）时添加 task-with-status，激活 CSS 变量卡片着色
 		// fork: a colour tag does the same, in the vault's row colours
 		const vault = vaultColorOfTask(task.tags);
-		if (task.status || vault) list.push('task-with-status');
+		// a done task without a colour tag is a plain card (faded), as a ticked line in a note
+		const plainDone = task.completed && !vault && (!task.status || task.status === 'done');
+		if ((task.status && !plainDone) || vault) list.push('task-with-status');
 		if (vault) list.push('gc-task-card--vault');
 		if (task.forkBlocked) list.push('gc-task-card--blocked'); // fork: another project's #lila day
 		return list;
@@ -109,6 +111,7 @@ export const TaskCard = memo(function TaskCard({ task, config, targetDate, onCli
 			} as CSSProperties;
 		}
 		if (!task.status) return undefined;
+		if (task.completed && task.status === 'done') return undefined; // fork: plain done card, no status colour
 		const statuses = plugin.settings?.taskStatuses || DEFAULT_TASK_STATUSES;
 		const colors = getStatusColor(task.status, statuses, getCurrentThemeMode());
 		if (!colors) return undefined;

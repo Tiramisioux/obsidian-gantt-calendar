@@ -208,7 +208,7 @@ export interface StatusFilterState {
 
 /** 默认状态筛选状态（默认只显示待办任务） */
 export const DEFAULT_STATUS_FILTER_STATE: StatusFilterState = {
-	selectedStatuses: ['todo']
+	selectedStatuses: ['todo', 'done'] // fork: completed tasks shown by default (upstream: ['todo'])
 };
 
 import type { App } from 'obsidian';

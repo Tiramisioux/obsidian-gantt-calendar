@@ -39,6 +39,13 @@
 	opacity: 0.4;
 }
 
+/* done without a colour tag: a plain card faded to 40 % (no green status
+   colour) — a ticked line in a note looks the same */
+.gc-task-card.gc-task-card--completed:not(.task-with-status) {
+	opacity: 0.4;
+	border-left-color: var(--text-faint);
+}
+
 /* month view: a day with a #lila / #röd task — date field in that colour
    (background set inline, two stripes when both); today's badge untouched */
 .gc-month-view__day-cell:not(.gc-month-view__day-cell--today) .gc-month-view__day-header--marked .gc-month-view__day-number {

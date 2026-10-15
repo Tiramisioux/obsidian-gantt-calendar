@@ -1174,13 +1174,14 @@ export class SvgGanttRenderer {
 
 			bar.setAttribute('fill', fillColor);
 			bar.setAttribute('opacity', '0.85');
-			// fork: an open task with a colour tag → its vault colour (tint + ink outline)
-			const vault = task.progress === 100 ? null : vaultColorOfTask(task.tags);
+			// fork: a task with a colour tag → its vault colour (tint + ink outline);
+			// done → the same colour at 40 %, as a ticked task in a note
+			const vault = vaultColorOfTask(task.tags);
 			if (vault) {
 				bar.setAttribute('fill', vault.bg);
 				bar.setAttribute('stroke', vault.ink);
 				bar.setAttribute('stroke-width', '1');
-				bar.setAttribute('opacity', '1');
+				bar.setAttribute('opacity', task.progress === 100 || task.completed ? '0.4' : '1');
 				if (task.forkBlocked) {          // another project's #lila day: lighter, dashed
 					bar.setAttribute('fill-opacity', '0.5');
 					bar.setAttribute('stroke-opacity', '0.5');
@@ -1557,12 +1558,12 @@ export class SvgGanttRenderer {
 
 			// 更新颜色（根据完成状态）
 			const isCompleted = task.completed || task.progress === 100;
-			// fork: the vault-colour outline only on open tasks with a colour tag
-			const vault = isCompleted ? null : vaultColorOfTask(task.tags);
+			// fork: vault colour + ink outline for a colour tag; done → 40 %
+			const vault = vaultColorOfTask(task.tags);
 			if (vault) {
 				bar.setAttribute('stroke', vault.ink);
 				bar.setAttribute('stroke-width', '1');
-				bar.setAttribute('opacity', '1');
+				bar.setAttribute('opacity', isCompleted ? '0.4' : '1');
 			} else {
 				bar.removeAttribute('stroke');
 				bar.removeAttribute('stroke-width');
@@ -1577,14 +1578,14 @@ export class SvgGanttRenderer {
 				bar.removeAttribute('stroke-opacity');
 				bar.removeAttribute('stroke-dasharray');
 			}
-			if (isCompleted) {
+			if (vault) {
+				bar.setAttribute('fill', vault.bg); // fork: colour kept when done (faded above)
+			} else if (isCompleted) {
 				bar.setAttribute('fill', 'var(--checkbox-done)'); // 完成状态颜色
 			} else {
 				// 根据优先级设置颜色
 				const priorityClass = task.custom_class?.split(' ').find(c => c.startsWith('priority-'));
-				if (vault) {
-					bar.setAttribute('fill', vault.bg); // fork: as in the first draw
-				} else if (priorityClass === 'priority-high') {
+				if (priorityClass === 'priority-high') {
 					bar.setAttribute('fill', 'var(--tag-fill-hot)');
 				} else if (priorityClass === 'priority-medium') {
 					bar.setAttribute('fill', 'var(--tag-fill-warm)');

@@ -122,6 +122,8 @@ export interface GanttCalendarSettings {
 	// 各视图作用域的筛选与排序状态，随插件设置落 data.json（按 vault 隔离、随库同步）。
 	// 运行时以 calendarStore 为准，main.ts 订阅写回；loadSettings 会按 scope 补全缺省
 	viewFilters?: Record<ViewScope, ViewFilterState>;
+	/** fork: views still on the old default status filter (['todo']) were given 'done' once */
+	forkDoneByDefault?: boolean;
 }
 
 /**

@@ -56,6 +56,17 @@ export default class GanttCalendarPlugin extends Plugin {
 		// 视图筛选偏好：从 data.json 水合进 store（先水合后订阅，
 		// 避免水合触发的首次 set 被当成变更写回）；
 		// 后续筛选变更经订阅防抖写回 data.json
+		// fork: completed tasks are shown by default (user, 2026-10-15). Once,
+		// every view still on upstream's default status filter (only 'todo')
+		// gets 'done' too; a view you set yourself is left alone.
+		if (!this.settings.forkDoneByDefault) {
+			for (const f of Object.values(this.settings.viewFilters ?? {})) {
+				const sel = f?.status?.selectedStatuses;
+				if (Array.isArray(sel) && sel.length === 1 && sel[0] === 'todo') sel.push('done');
+			}
+			this.settings.forkDoneByDefault = true;
+			await this.settingsManager.saveSettings(this.settings);
+		}
 		useCalendarStore.getState().hydrateViewFilters(this.settings.viewFilters);
 		this.viewFiltersUnsubscribe = useCalendarStore.subscribe((state, prev) => {
 			if (state.viewFilters === prev.viewFilters) return;
