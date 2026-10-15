@@ -15,7 +15,7 @@ export function ForkScopeBar(): JSX.Element | null {
 		: scope.label;
 	return (
 		<div className="gc-scope-bar">
-			<span className="gc-scope-chip" title="Andra projekts inspelningstillfällen (#lila) visas ljusare">
+			<span className="gc-scope-chip" title="Dagar som andra projekt bokat visas ljusare: inspelningstillfällen (#lila) alltid, möten (#röd) när de är heldag">
 				<span className="gc-scope-chip__label">{what}</span>
 				<button
 					type="button"
@@ -25,7 +25,7 @@ export function ForkScopeBar(): JSX.Element | null {
 					onClick={() => useCalendarStore.getState().setForkScope(null, null)}
 				>×</button>
 			</span>
-			<span className="gc-scope-bar__legend">ljuslila = inspelning i annat projekt</span>
+			<span className="gc-scope-bar__legend">ljusare = dagen bokad i annat projekt (inspelning, heldagsmöte)</span>
 		</div>
 	);
 }

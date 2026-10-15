@@ -127,7 +127,7 @@ describe('fork: scope (open the calendar on a kontext/projekt)', () => {
 			task('x/delprojekt.md', []),                                          // note's delprojekt
 			task('03_PROJEKTPLANERING/NORDKAPAREN/DOK/notes/n.md', []),           // folder
 			task('c.md', ['lila', 'UND', 'RISE']),                                // other project's shoot → blocked
-			task('d.md', ['röd', 'UND', 'RISE']),                                 // other project's meeting → hidden
+			{ ...task('d.md', ['röd', 'UND', 'RISE']), datePrecision: { dueDate: 'time' as const } }, // other project's timed meeting → hidden
 			task('e.md', ['DOKUMENT']),                                           // not DOK
 		];
 		const out = applyScope(tasks, scope, fmOf);
@@ -136,6 +136,19 @@ describe('fork: scope (open the calendar on a kontext/projekt)', () => {
 			['03_PROJEKTPLANERING/NORDKAPAREN/DOK/notes/n.md', false], ['c.md', true],
 		]);
 		expect(tasks[5].forkBlocked).toBeUndefined();                          // a copy, not the store's task
+	});
+
+	it('blocked days: #lila always (times or not), #röd only all-day', () => {
+		const scope = scopeFor('03_PROJEKTPLANERING/NORDKAPAREN/DOK', true, null);
+		const line = (l: string) => parseSingleTaskLine(l, 'o.md', 'o.md', 1, ['dataview'])!;
+		const out = applyScope([
+			line('- [ ] inspelning #lila #UND [start:: 2026-10-20 10:00] [due:: 2026-10-20 13:00]'),
+			line('- [ ] heldagsmöte #röd #UND [due:: 2026-10-21]'),
+			line('- [ ] möte kl 10 #röd #UND [due:: 2026-10-22 10:00]'),
+		], scope, fmOf);
+		expect(out.map((t) => [t.description, !!t.forkBlocked])).toEqual([['inspelning', true], ['heldagsmöte', true]]);
+		const light = dayMarks(out.filter((t) => t.description === 'heldagsmöte'));
+		expect(light.map((m) => [m.color.key, m.light])).toEqual([['rod', true]]);
 	});
 
 	it('context scope: #CTX, kontext:, the context folder', () => {

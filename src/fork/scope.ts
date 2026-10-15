@@ -14,9 +14,11 @@
  * A task is IN a project scope when it is tagged #PROJ or #PROJ/<sub>, or its
  * note says `projekt: "#PROJ…"` / `delprojekt: "#PROJ/…"`, or it lives in the
  * project folder (subprojects included). Context scope: #CTX(/…), `kontext:
- * CTX`, or the context folder. Outside the scope, an inspelningstillfälle
- * (#lila) is still shown — those days are booked — as a "blocked" copy
- * (forkBlocked), drawn in a lighter tint.
+ * CTX`, or the context folder. Outside the scope, a day another project has
+ * booked is still shown, as a "blocked" copy (forkBlocked) in a lighter tint:
+ * an inspelningstillfälle (#lila) always — it takes the whole day, times or
+ * not — and a meeting (#röd) only when it is all-day (no clock time on any of
+ * its dates; user, 2026-10-15).
  *
  * Pure: no Obsidian API (the plugin passes the folder test and frontmatter).
  */
@@ -106,7 +108,18 @@ export function classifyTask(task: GCTask, scope: ForkScope, fmOf: (path: string
 		inside = path === scope.path;
 	}
 	if (inside) return 'in';
-	return vaultColorOfTask(task.tags)?.key === 'lila' ? 'blocked' : null;
+	return blocksDay(task) ? 'blocked' : null;
+}
+
+/** All-day = no date of the task carries a clock time. */
+export function isAllDay(task: GCTask): boolean {
+	return !Object.values(task.datePrecision ?? {}).includes('time');
+}
+
+/** Does another project's task book its day? #lila always, #röd when all-day. */
+export function blocksDay(task: GCTask): boolean {
+	const key = vaultColorOfTask(task.tags)?.key;
+	return key === 'lila' || (key === 'rod' && isAllDay(task));
 }
 
 /** The scoped task list: in-scope tasks as they are, blocked ones as marked copies. */
