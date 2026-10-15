@@ -1,3 +1,4 @@
+import { GC_PLUGIN_ID } from '../fork/pluginId';
 import { App } from 'obsidian';
 import { GCTask, MetadataField } from '../types';
 import { formatDate } from '../dateUtils/dateUtilsIndex';
@@ -136,7 +137,7 @@ export function serializeTask(
 			fallbackDesc = fallbackDesc.replace(/[➕🛫⏳📅❌✅]\s*\d{4}-\d{2}-\d{2}/gu, ' ');
 			fallbackDesc = fallbackDesc.replace(/\[(priority|created|start|scheduled|due|cancelled|completion)::\s*[^\]]+\]/gi, ' ');
 			fallbackDesc = fallbackDesc.replace(/%%.+?%%/g, " ");
-			fallbackDesc = fallbackDesc.replace(/#[一-龥a-zA-Z0-9_]+/g, ' ');
+			fallbackDesc = fallbackDesc.replace(/#[\p{L}\p{M}\p{N}_/-]+/gu, ' '); // fork: any script
 			finalDescription = fallbackDesc.replace(/\s+/g, ' ').trim();
 		}
 	}
@@ -164,7 +165,7 @@ export function serializeTask(
 
 	// 2. 从插件设置中获取全局过滤器和任务状态配置（官方 API）
 	const appWithPlugins = app as App & { plugins?: { getPlugin?: (id: string) => { settings?: SerializerPluginSettings } | null } };
-	const ganttPlugin = appWithPlugins.plugins?.getPlugin?.('gantt-calendar');
+	const ganttPlugin = appWithPlugins.plugins?.getPlugin?.(GC_PLUGIN_ID); // fork: own id
 	const pluginSettings: SerializerPluginSettings = ganttPlugin?.settings ?? {};
 	const globalFilter = (pluginSettings.globalTaskFilter || '').trim();
 	const taskStatuses: Array<{ key: TaskStatusType; symbol: string }> = pluginSettings.taskStatuses || DEFAULT_TASK_STATUSES;
@@ -193,15 +194,18 @@ export function serializeTask(
 		parts.push(globalFilter);
 	}
 
-	// 标签（复选框之后，任务描述之前）
-	if (merged.tags && merged.tags.length > 0) {
-		const tagsStr = merged.tags.map(tag => `#${tag.trim()}`).join(' ');
-		parts.push(tagsStr);
-	}
-
+	// fork: the vault's slot order — description → #colour → #PROJECT(/SUB) →
+	// fields. Upstream wrote the tags first, so every edit in the calendar
+	// moved them in front of the text.
 	// 任务描述（trim 防止 join(' ') 产生双空格）
 	if (merged.description) {
 		parts.push(merged.description.trim());
+	}
+
+	// 标签（描述之后 — fork）
+	if (merged.tags && merged.tags.length > 0) {
+		const tagsStr = merged.tags.map(tag => `#${tag.trim()}`).join(' ');
+		parts.push(tagsStr);
 	}
 
 	// 统一的内联元数据字段 %%[key::value]%%

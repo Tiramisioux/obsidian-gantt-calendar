@@ -493,7 +493,10 @@ export class RegularExpressions {
          * "#前端 开发任务" -> " 开发任务"
          * "完成任务#tag" -> "完成任务"
          */
-        removeTags: /#([a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_/\u4e00-\u9fa5]*)\s*/g,
+        // fork: any script, not just ASCII + CJK — '#röd' was read as '#r' + 'öd',
+        // '#DOK/styrelsemöte' as '#DOK/styrelsem'. \p{M} keeps NFD names (o + U+0308)
+        // whole; '-' is a tag character in Obsidian too.
+        removeTags: /#([\p{L}\p{M}_][\p{L}\p{M}\p{N}_/-]*)\s*/gu,
 
         /**
          * 匹配标签（用于提取标签内容）
@@ -502,7 +505,7 @@ export class RegularExpressions {
          * @example
          * "任务 #work #urgent" -> 可以提取出 ["work", "urgent"]
          */
-        matchTags: /#([a-zA-Z\u4e00-\u9fa5][a-zA-Z0-9_/\u4e00-\u9fa5]*)/g,
+        matchTags: /#([\p{L}\p{M}_][\p{L}\p{M}\p{N}_/-]*)/gu, // fork: as removeTags
 
         /**
          * 提取 %%content%% ticktick 内容（非贪婪，支持多个块）

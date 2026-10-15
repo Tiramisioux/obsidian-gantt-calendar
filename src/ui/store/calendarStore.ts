@@ -1,3 +1,4 @@
+import type { ForkScope } from '../../fork/scope';
 import { create } from 'zustand';
 import type {
 	CalendarViewType,
@@ -26,6 +27,14 @@ interface CalendarStoreState {
 	viewType: CalendarViewType;
 	currentDate: Date;
 	tasks: GCTask[];
+	/** fork: what the calendar views show — `tasks` through the open scope (= tasks when none) */
+	viewTasks: GCTask[];
+	/** fork: the kontext/projekt the calendar is opened on (null = everything) */
+	forkScope: ForkScope | null;
+	/** fork: the scope as a filter over all tasks (built by the plugin — needs the metadata cache) */
+	forkScopeFilter: ((tasks: GCTask[]) => GCTask[]) | null;
+	/** fork: each view's tag filter as it was when the scope opened — ignored while unchanged */
+	forkScopeTagBase: Partial<Record<ViewScope, TagFilterState>> | null;
 	changedFilePath?: string;
 	updateSeq: number;
 	/** 设置变更版本号：刷新设置时自增，用于触发 React 视图整体重挂载 */
@@ -42,6 +51,8 @@ interface CalendarStoreState {
 	/** 数据层 TaskStore 通知时调用（防抖已由 TaskStore 处理） */
 	notifyTasksUpdated: (tasks: GCTask[], filePath?: string) => void;
 	setTasks: (tasks: GCTask[]) => void;
+	/** fork: open / clear the calendar's scope */
+	setForkScope: (scope: ForkScope | null, filter: ((tasks: GCTask[]) => GCTask[]) | null) => void;
 	/** 设置/视图全量刷新：自增 settingsVersion，触发整体重挂载 */
 	bumpSettings: () => void;
 	/** 请求甘特图滚动（每次调用自增 seq，GanttView 订阅执行） */
@@ -127,6 +138,10 @@ export const useCalendarStore = create<CalendarStoreState>((set) => ({
 	viewType: 'year',
 	currentDate: new Date(),
 	tasks: [],
+	viewTasks: [],
+	forkScope: null,
+	forkScopeFilter: null,
+	forkScopeTagBase: null,
 	changedFilePath: undefined,
 	updateSeq: 0,
 	viewFilters: buildInitialFilters(),
@@ -144,6 +159,7 @@ export const useCalendarStore = create<CalendarStoreState>((set) => ({
 			// 任务集刷新时同步剔除失效标签（幽灵标签隐形筛选的根治）
 			return {
 				tasks,
+				viewTasks: s.forkScopeFilter ? s.forkScopeFilter(tasks) : tasks, // fork
 				changedFilePath: filePath,
 				updateSeq: s.updateSeq + 1,
 				viewFilters: pruneTagFilters(s.viewFilters, tasks),
@@ -152,7 +168,20 @@ export const useCalendarStore = create<CalendarStoreState>((set) => ({
 	setTasks: (tasks) =>
 		set((s) => ({
 			tasks,
+			viewTasks: s.forkScopeFilter ? s.forkScopeFilter(tasks) : tasks, // fork
 			viewFilters: pruneTagFilters(s.viewFilters, tasks),
+		})),
+	setForkScope: (scope, filter) =>
+		set((s) => ({
+			forkScope: scope,
+			forkScopeFilter: scope ? filter : null,
+			// the scope replaces the saved tag filters (as the 3D graph fork's scope
+			// replaces its filters) — without touching them: they are only ignored
+			// until changed, and are back as they were once the scope closes
+			forkScopeTagBase: scope
+				? Object.fromEntries(Object.entries(s.viewFilters).map(([k, f]) => [k, f.tag])) as Partial<Record<ViewScope, TagFilterState>>
+				: null,
+			viewTasks: scope && filter ? filter(s.tasks) : s.tasks,
 		})),
 	bumpSettings: () => set((s) => ({ settingsVersion: s.settingsVersion + 1 })),
 	requestGanttScroll: (action) =>
@@ -191,5 +220,16 @@ export const useCalendarStore = create<CalendarStoreState>((set) => ({
 /**
  * 选择器：获取某视图作用域的筛选状态
  */
-export const selectViewFilter = (state: CalendarStoreState, scope: ViewScope): ViewFilterState =>
-	state.viewFilters[scope] || defaultFilter();
+export const selectViewFilter = (state: CalendarStoreState, scope: ViewScope): ViewFilterState => {
+	const f = state.viewFilters[scope] || defaultFilter();
+	// fork: while a scope is open, a tag filter saved before it opened is ignored
+	// (same object = not changed since); a stable copy keeps zustand from re-rendering
+	if (!state.forkScope || f.tag.selectedTags.length === 0 || state.forkScopeTagBase?.[scope] !== f.tag) return f;
+	let g = scopedFilterCache.get(f);
+	if (!g) {
+		g = { ...f, tag: { ...f.tag, selectedTags: [] } };
+		scopedFilterCache.set(f, g);
+	}
+	return g;
+};
+const scopedFilterCache = new WeakMap<ViewFilterState, ViewFilterState>();

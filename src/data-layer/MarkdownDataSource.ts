@@ -15,6 +15,7 @@
  * - 完整任务由 TaskRepository 统一存储
  */
 
+import { GC_PLUGIN_ID } from '../fork/pluginId';
 import { App, TFile, EventRef, ListItemCache } from 'obsidian';
 import { parseTasksFromListItems } from '../tasks/taskParser/main';
 import { parseTaskLine } from '../tasks/taskParser/step1';
@@ -605,7 +606,7 @@ export class MarkdownDataSource implements IDataSource {
 		// 用于调试和验证问题，避免生产环境性能开销
 		// 通过设置插件实例的 __dev_mode__ 属性为 true 来启用
 		const appWithPlugins = this.app as App & { plugins?: { plugins?: Record<string, Record<string, unknown>> } };
-		const isDev = appWithPlugins.plugins?.plugins?.['gantt-calendar']?.['__dev_mode__'] === true;
+		const isDev = appWithPlugins.plugins?.plugins?.[GC_PLUGIN_ID]?.['__dev_mode__'] === true;
 
 		if (isDev) {
 			Logger.debug('MarkdownDataSource', 'Dev mode: Adding metadataCache listener');

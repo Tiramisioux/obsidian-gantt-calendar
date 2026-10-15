@@ -40,7 +40,7 @@ export function DayView(): JSX.Element {
 	const plugin = usePlugin();
 	const app = useApp();
 	const currentDate = useCalendarStore((s) => s.currentDate);
-	const tasks = useCalendarStore((s) => s.tasks);
+	const tasks = useCalendarStore((s) => s.viewTasks); // fork: the open scope
 	const filter = useCalendarStore((s) => selectViewFilter(s, 'day'));
 	const refreshTasks = useCalendarStore((s) => s.refreshTasks);
 	// 稳定回调：TaskCard 已 memo，内联箭头函数会使 memo 失效

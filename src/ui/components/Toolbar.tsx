@@ -1,8 +1,9 @@
+import { GC_PLUGIN_ID } from '../../fork/pluginId';
 import { useMemo, type JSX, type MouseEvent as ReactMouseEvent } from 'react';
 import type { CalendarViewType, SortField } from '../../types';
 import { ToolbarClasses, CreateTaskButtonClasses } from '../../utils/bem';
 import { usePlugin } from '../pluginContext';
-import { useCalendarStore, type ViewScope } from '../store/calendarStore';
+import { useCalendarStore, selectViewFilter, type ViewScope } from '../store/calendarStore';
 import { i18n } from '../../i18n/i18n';
 import { formatDate, getWeekOfDate } from '../../dateUtils/dateUtilsIndex';
 import { openCreateTaskModal } from '../modals/TaskFormModal';
@@ -37,7 +38,7 @@ export function ToolbarBar(): JSX.Element {
 	const viewType = useCalendarStore((s) => s.viewType);
 	const currentDate = useCalendarStore((s) => s.currentDate);
 	const scope = viewType as ViewScope;
-	const filter = useCalendarStore((s) => s.viewFilters[scope]);
+	const filter = useCalendarStore((s) => selectViewFilter(s, scope)); // fork: what the view applies (scope-aware)
 	const setViewType = useCalendarStore((s) => s.setViewType);
 	const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
 	const setStatusFilter = useCalendarStore((s) => s.setStatusFilter);
@@ -105,7 +106,7 @@ export function ToolbarBar(): JSX.Element {
 	const openSettings = () => {
 		const a = plugin.app as unknown as { setting?: { open(): void; openTabById(id: string): void } };
 		a.setting?.open();
-		a.setting?.openTabById('gantt-calendar');
+		a.setting?.openTabById(GC_PLUGIN_ID); // fork: own id
 	};
 
 	// ===== 下拉菜单（声明式） =====

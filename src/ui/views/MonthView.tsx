@@ -1,7 +1,8 @@
 import { Fragment, useMemo, useCallback, useEffect, useRef, type JSX } from 'react';
+import { dayMarks, dayMarkBackground, dayMarkInk } from '../../fork/vaultColors';
 import { AnimatePresence, motion, type Variants } from 'motion/react';
 import { taskKey } from '../utils/taskKey';
-import type { DragEvent as ReactDragEvent } from 'react';
+import type { CSSProperties, DragEvent as ReactDragEvent } from 'react';
 import { Notice } from 'obsidian';
 import { generateMonthCalendar } from '../../calendar/calendarGenerator';
 import type { GCTask } from '../../types';
@@ -49,7 +50,7 @@ export function MonthView(): JSX.Element {
 	const plugin = usePlugin();
 	const app = useApp();
 	const currentDate = useCalendarStore((s) => s.currentDate);
-	const tasks = useCalendarStore((s) => s.tasks);
+	const tasks = useCalendarStore((s) => s.viewTasks); // fork: the open scope
 	const filter = useCalendarStore((s) => selectViewFilter(s, 'month'));
 	const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
 	const setViewType = useCalendarStore((s) => s.setViewType);
@@ -278,6 +279,17 @@ export function MonthView(): JSX.Element {
 							const key = toISOStringLocal(day.date);
 							const dayTasks = weekModel?.cells.get(key) || [];
 							const displayTasks = dayTasks.slice(0, taskLimit);
+							// fork: a day with an inspelningstillfälle (#lila) and/or a meeting
+							// (#röd) — in the cell or under a multi-day bar — gets that colour
+							// in its date field; both → two stripes. In a scoped calendar another
+							// project's #lila day (blocked) is the lighter tint.
+							const marks = dayMarks([
+								...dayTasks,
+								...(weekModel?.spanBars ?? [])
+									.filter((b) => b.startCol <= dayIndex && dayIndex <= b.endCol)
+									.map((b) => b.task),
+							]);
+							const markBg = dayMarkBackground(marks);
 							const hasMore = dayTasks.length > taskLimit;
 
 							const lunarEl = day.lunarText && plugin.settings.showLunar
@@ -320,7 +332,10 @@ export function MonthView(): JSX.Element {
 									}}
 									onDrop={(e) => void handleDayDrop(e, day.date)}
 								>
-									<div className={MonthViewClasses.elements.dayHeader}>
+									<div
+										className={`${MonthViewClasses.elements.dayHeader}${markBg ? ' gc-month-view__day-header--marked' : ''}`}
+										style={markBg ? ({ background: markBg, '--day-mark-ink': dayMarkInk(marks) } as CSSProperties) : undefined}
+									>
 										<div className={MonthViewClasses.elements.dayNumber}>{day.day.toString()}</div>
 										{lunarEl}
 									</div>

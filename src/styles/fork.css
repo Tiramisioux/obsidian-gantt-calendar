@@ -1,0 +1,92 @@
+/* ========================================
+   fork (Tiramisioux, 2026-10-15): the vault's colour convention.
+   A task's colour is its colour tag; the colours are the vault snippet
+   highlight-tags.css row colours (the same in light and dark, as there).
+   Logic: src/fork/vaultColors.ts. Imported last in main.css.
+   ======================================== */
+
+.gc-tag--vault-bla    { --vault-bg: #d0e7ff; --vault-ink: #1c3d5a; }
+.gc-tag--vault-gul    { --vault-bg: #fff3cd; --vault-ink: #665c00; }
+.gc-tag--vault-orange { --vault-bg: #fde2cf; --vault-ink: #995200; }
+.gc-tag--vault-gra    { --vault-bg: #e5e5e5; --vault-ink: #555555; }
+.gc-tag--vault-rod    { --vault-bg: #f8d7da; --vault-ink: #842029; }
+.gc-tag--vault-lila   { --vault-bg: #e6d9f6; --vault-ink: #5c3a78; }
+.gc-tag--vault-gron   { --vault-bg: #d3f4d1; --vault-ink: #205d28; }
+
+/* colour tags: their row colours */
+.gc-tag[class*="gc-tag--vault-"]:not(.gc-tag--selected) {
+	background-color: var(--vault-bg);
+	border-color: color-mix(in srgb, var(--vault-ink) 25%, transparent);
+	color: var(--vault-ink);
+}
+
+/* every other tag: Obsidian's own tag look (no hashed pastel) */
+.gc-tag--plain:not(.gc-tag--selected) {
+	background-color: var(--tag-background);
+	border-color: var(--tag-border-color, transparent);
+	color: var(--tag-color);
+}
+
+/* task cards with a colour tag: tint + ink come inline from TaskCard
+   (--task-bg-color / --task-text-color); the side bar in the ink too */
+.gc-task-card.gc-task-card--vault.gc-task-card--pending {
+	border-left-color: var(--vault-ink);
+}
+
+/* done: keep the colour, fade to 40 % — as a ticked task in a note */
+.gc-task-card.gc-task-card--vault.gc-task-card--completed {
+	border-left-color: var(--vault-ink);
+	opacity: 0.4;
+}
+
+/* month view: a day with a #lila / #röd task — date field in that colour
+   (background set inline, two stripes when both); today's badge untouched */
+.gc-month-view__day-cell:not(.gc-month-view__day-cell--today) .gc-month-view__day-header--marked .gc-month-view__day-number {
+	color: var(--day-mark-ink);
+}
+
+/* scoped calendar: another project's #lila day — lighter tint (inline vars),
+   a dashed edge says "not this project" */
+.gc-task-card.gc-task-card--blocked {
+	border-left-style: dashed;
+}
+
+/* scope bar under the toolbar: the kontext/projekt the calendar is opened on */
+.gc-scope-bar {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 10px;
+	flex-shrink: 0;
+	margin: -8px 14px 8px;
+}
+.gc-scope-bar__legend {
+	font-size: var(--gc-font-xs, 12px);
+	color: var(--text-faint);
+}
+.gc-scope-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 1px 2px 1px 9px;
+	border-radius: 12px;
+	background-color: var(--tag-background);
+	color: var(--tag-color);
+	font-size: var(--gc-font-xs, 12px);
+	font-weight: 600;
+	white-space: nowrap;
+	vertical-align: middle;
+}
+.gc-scope-chip__clear {
+	all: unset;
+	cursor: pointer;
+	padding: 0 6px;
+	border-radius: 10px;
+	line-height: 1.4;
+	font-size: 1.1em;
+	opacity: 0.7;
+}
+.gc-scope-chip__clear:hover {
+	opacity: 1;
+	background-color: var(--background-modifier-hover);
+}

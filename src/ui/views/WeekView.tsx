@@ -20,7 +20,7 @@ export function WeekView(): JSX.Element {
 	const plugin = usePlugin();
 	const currentDate = useCalendarStore((s) => s.currentDate);
 	const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
-	const tasks = useCalendarStore((s) => s.tasks);
+	const tasks = useCalendarStore((s) => s.viewTasks); // fork: the open scope
 	const filter = useCalendarStore((s) => selectViewFilter(s, 'week'));
 	const updateSeq = useCalendarStore((s) => s.updateSeq);
 	const refreshTasks = useCalendarStore((s) => s.refreshTasks);

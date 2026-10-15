@@ -27,6 +27,8 @@ export interface GanttChartTask {
 	dependencies?: string[] | string;
 	/** 自定义CSS类名 */
 	custom_class?: string;
+	/** fork: another project's #lila day in a scoped calendar (lighter bar) */
+	forkBlocked?: boolean;
 
 	// ==================== 扩展字段（用于渲染） ====================
 	/** 是否已完成 */

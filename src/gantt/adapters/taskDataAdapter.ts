@@ -93,6 +93,7 @@ export class TaskDataAdapter {
 			content: task.content,
 			description: task.description,
 			tags: task.tags,
+			forkBlocked: task.forkBlocked, // fork
 			priority: task.priority,
 			format: task.format,
 			status: task.status,

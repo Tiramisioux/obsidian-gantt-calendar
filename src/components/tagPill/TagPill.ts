@@ -4,6 +4,7 @@
  * 用于在插件中统一显示任务标签的样式和交互
  */
 
+import { vaultColorOfTag } from '../../fork/vaultColors';
 import { TagPillOptions } from './types';
 import { TagClasses } from '../../utils/bem';
 
@@ -31,11 +32,9 @@ export class TagPill {
 		} = options;
 
 		// 计算颜色索引
-		const finalColorIndex = colorIndex ?? this.getColorIndex(label);
-
 		// 创建容器元素
 		const pillEl = createSpan();
-		for (const cls of this.buildClassList(finalColorIndex)) {
+		for (const cls of this.classesFor(label, colorIndex)) {
 			pillEl.addClass(cls);
 		}
 
@@ -138,6 +137,22 @@ export class TagPill {
 			hash = hash & hash; // Convert to 32bit integer
 		}
 		return Math.abs(hash) % this.COLOR_COUNT;
+	}
+
+	/**
+	 * fork: the chip classes for a tag — a colour tag gets its vault colour
+	 * (gc-tag--vault-<key>), any other tag Obsidian's own tag look
+	 * (gc-tag--plain) instead of a hashed pastel. An explicit colorIndex
+	 * still wins. Used by TagPill.create and the React TagPillSpan.
+	 */
+	static classesFor(label: string, colorIndex?: number, extraClasses?: string[]): string[] {
+		if (colorIndex !== undefined) return this.buildClassList(colorIndex, extraClasses);
+		const vc = vaultColorOfTag(label);
+		const classes = [TagClasses.block, vc ? `gc-tag--vault-${vc.key}` : 'gc-tag--plain'];
+		if (extraClasses) {
+			classes.push(...extraClasses.filter(Boolean));
+		}
+		return classes;
 	}
 
 	/**

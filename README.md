@@ -1,3 +1,64 @@
+# Gantt Calendar — Tiramisioux fork
+
+A fork of [Gantt Calendar](https://github.com/sustcsugar/obsidian-gantt-calendar) by Sugar, made for a vault that tags its tasks in Swedish and colours them by a fixed convention. Everything below is in addition to — or a fix of — the upstream plugin; the upstream README follows further down.
+
+**Plugin id `gantt-calendar-tiramisioux`** (upstream: `gantt-calendar`), so community-store updates of the original never overwrite it. Both register the same views, so **only one of the two may be enabled**. Branch `tiramisioux` holds all fork work; `master` follows upstream. Forked at release **1.6.2**.
+
+## What this fork adds
+
+| | What you get |
+|---|---|
+| **Tags in any script** | `#röd`, `#grå`, `#DOK/styrelsemöte_oktober`, `#Åsa_Öberg` are read whole. Upstream only knew ASCII + Chinese, so `#röd` became the tag `#r` plus the loose text `öd` — and when the plugin wrote a task back (tick, drag, resize) it saved that broken line into the note. Hyphens and macOS's decomposed letters (`o` + `¨`) are tag characters too. |
+| **Your line order on write-back** | A task the calendar rewrites keeps the vault's order: `text #colour #PROJECT #PROJECT/sub [start:: …] [due:: …]`. Upstream put the tags in front of the text. |
+| **Colour tags = task colours** | A task's colour is its colour tag, in the exact row colours of the vault snippet `highlight-tags.css`: cards (all views), gantt bars (tint + outline), tag chips. Done tasks keep the colour at 40 %, as in a note. Every other tag looks like an ordinary Obsidian tag (no random pastel). |
+| **Meeting and shooting days** | Month view: a day with a `#röd` task (a meeting) or a `#lila` task (an inspelningstillfälle) gets that colour in its date field — both on one day → two stripes. |
+| **Open a project in the calendar** | File menu **Open in Gantt calendar** (notes and folders) and the command **Open the active note's project in the calendar** (**⌘⇧C**, change in Settings → Hotkeys). The calendar then shows only that kontext/projekt, subprojects included — plus every *other* project's `#lila` days in a lighter tint, since those days are booked. A bar under the toolbar names the scope; **×** (or the command **Show all projects in the calendar**) shows everything again. |
+| **Latin ribbon name** | The ribbon icon says *Gantt Calendar* (upstream: 甘特日历 whatever the language). |
+
+### The colours
+
+| Tag | Card / chip | Ink | Means |
+|---|---|---|---|
+| `#blå` | `#d0e7ff` | `#1c3d5a` | creative work |
+| `#gul` | `#fff3cd` | `#665c00` | shaping / analysis |
+| `#orange` | `#fde2cf` | `#995200` | admin, communication |
+| `#grå` | `#e5e5e5` | `#555555` | travel, waiting on others |
+| `#röd` | `#f8d7da` | `#842029` | meeting — marks its day |
+| `#lila` | `#e6d9f6` | `#5c3a78` | inspelningstillfälle (shooting day) — marks its day |
+| `#grön` | `#d3f4d1` | `#205d28` | home |
+
+The first colour tag on a line decides. Defined in `src/fork/vaultColors.ts` and `src/styles/fork.css`.
+
+### What "a project" means here
+
+| Opened from | The calendar shows |
+|---|---|
+| a project folder `03_PROJEKTPLANERING/<CTX>/<PROJ>` (or anything inside it) | project `<PROJ>` |
+| a context folder `03_PROJEKTPLANERING/<CTX>` | context `<CTX>` |
+| a note with `projekt: "#PROJ"` (hub, subproject note, clipping, person hub) | project `PROJ` |
+| a note inside a project folder without `projekt` | that project |
+| a note with only `kontext:` | that context |
+| any other folder / note | the tasks in it |
+
+A task belongs to project `P` when it is tagged `#P` or `#P/<sub>`, or its note has `projekt: "#P…"` / `delprojekt: "#P/…"`, or it lives in `P`'s folder. Context `C`: `#C`, `kontext: C`, or the context folder. Same rules as the 3D graph fork's *Open in 3D graph*. While a scope is open, the tag filters you had saved are set aside (not changed) — pick a tag to narrow inside the scope; after × your filters are back.
+
+## Install / update
+
+Built files go to `<vault>/.obsidian/plugins/gantt-calendar-tiramisioux/` (`main.js`, `manifest.json`, `styles.css`; the fork's `data.json` started as a copy of the original's). Disable *Gantt Calendar*, enable *Gantt Calendar (Tiramisioux)*. Versions are `1.6.2-tiramisioux.N`.
+
+## Building
+
+```bash
+npm ci
+npm run build          # tsc + esbuild → main.js, styles.css
+npx jest               # upstream suite + tests/fork.test.ts
+cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/gantt-calendar-tiramisioux/"
+```
+
+Fork code is marked `fork:`; the fork's own files are `src/fork/` (`vaultColors.ts`, `scope.ts`, `pluginId.ts`, `ScopeBar.tsx`), `src/styles/fork.css`, `tests/fork.test.ts`. Live testing against a running Obsidian (`--remote-debugging-port=9222`): `node scripts/dev/cdp.mjs '<js>'`, `node scripts/dev/shot.mjs out.png`.
+
+---
+
 # Obsidian Gantt Calendar
 
 [简体中文](./README_zh.md)

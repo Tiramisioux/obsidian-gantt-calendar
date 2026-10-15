@@ -1,3 +1,4 @@
+import { GC_PLUGIN_ID } from '../fork/pluginId';
 import { App, TFile } from 'obsidian';
 import { GCTask } from '../types';
 import { serializeTask, TaskUpdates } from './taskSerializer';
@@ -61,7 +62,7 @@ function getPluginTaskCache(app: App): PluginTaskCache | null {
 	const appWithPlugins = app as App & {
 		plugins?: { getPlugin?: (id: string) => { taskCache?: PluginTaskCache } | null };
 	};
-	return appWithPlugins.plugins?.getPlugin?.('gantt-calendar')?.taskCache ?? null;
+	return appWithPlugins.plugins?.getPlugin?.(GC_PLUGIN_ID)?.taskCache ?? null; // fork: own id
 }
 
 /**
@@ -85,7 +86,7 @@ function getGlobalTaskFilter(app: App): string {
 	const appWithPlugins = app as App & {
 		plugins?: { getPlugin?: (id: string) => { settings?: { globalTaskFilter?: string } } | null };
 	};
-	return appWithPlugins.plugins?.getPlugin?.('gantt-calendar')?.settings?.globalTaskFilter || '';
+	return appWithPlugins.plugins?.getPlugin?.(GC_PLUGIN_ID)?.settings?.globalTaskFilter || ''; // fork: own id
 }
 
 function lineMatchesTask(line: string, task: GCTask, globalFilter: string): boolean {

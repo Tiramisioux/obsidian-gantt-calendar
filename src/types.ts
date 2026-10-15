@@ -117,6 +117,7 @@ export interface GCTask {
 	format?: 'tasks' | 'dataview'; // 源格式：用于写回时选择正确的字段样式
 	priority: string;              // 优先级：highest, high, medium, normal, low, lowest（默认normal）
 	tags?: string[];               // 任务标签列表
+	forkBlocked?: boolean;         // fork: another project's #lila day, shown in a scoped calendar (lighter)
 	createdDate?: Date;            // 创建日期
 	startDate?: Date;              // 开始日期
 	scheduledDate?: Date;          // 计划日期

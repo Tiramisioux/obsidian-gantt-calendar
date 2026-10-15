@@ -8,11 +8,11 @@
  * - 底部胶囊切换器（OR/AND/NOT）
  */
 
+import { vaultColorOfTag } from '../../fork/vaultColors';
 import { useMemo, useState, type JSX } from 'react';
 import { buildTagHierarchy } from '../../tasks/tags/TagHierarchyBuilder';
 import type { TagNode } from '../../tasks/tags/TagHierarchy';
 import { Icon } from './Icon';
-import { TagPill } from '../../components/tagPill';
 import { i18n } from '../../i18n/i18n';
 import { setCssProps } from '../../utils/bem';
 
@@ -28,9 +28,9 @@ export interface TagTreeFilterProps {
 
 /** 标签专属颜色圆点 */
 export function ColorDot({ fullPath }: { fullPath: string }): JSX.Element {
-	const idx = TagPill.getColorIndex(fullPath);
-	const names = ['blue', 'green', 'orange', 'yellow', 'purple', 'pink'];
-	const colorVar = `var(--gc-color-${names[idx] ?? 'blue'}, #3884ff)`;
+	// fork: a colour tag's dot in its vault ink, every other tag in Obsidian's tag colour
+	const vc = vaultColorOfTag(fullPath);
+	const colorVar = vc ? vc.ink : 'var(--tag-color, var(--text-accent))';
 	return (
 		<span
 			aria-hidden

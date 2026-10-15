@@ -34,7 +34,7 @@ const GANTT_CONFIG: Omit<GanttChartConfig, 'on_click' | 'on_date_change' | 'on_p
 export function GanttView(): JSX.Element {
 	const plugin = usePlugin();
 	const app = useApp();
-	const tasks = useCalendarStore((s) => s.tasks);
+	const tasks = useCalendarStore((s) => s.viewTasks); // fork: the open scope
 	const filter = useCalendarStore((s) => selectViewFilter(s, 'gantt'));
 	const ganttScroll = useCalendarStore((s) => s.ganttScroll);
 	const refreshTasks = useCalendarStore((s) => s.refreshTasks);
@@ -247,7 +247,7 @@ export function GanttView(): JSX.Element {
 }
 
 function tasksSignature(tasks: GanttChartTask[]): string {
-	return tasks.map((t) => `${t.id}|${t.start}|${t.end}|${t.leadStart || ''}|${t.progress}|${t.completed}|${t.name}|${t.custom_class || ''}`).join('\u0001');
+	return tasks.map((t) => `${t.id}|${t.start}|${t.end}|${t.leadStart || ''}|${t.progress}|${t.completed}|${t.name}|${t.custom_class || ''}|${(t.tags ?? []).join(' ')}|${t.forkBlocked ? 1 : 0}`).join('\u0001'); // fork: colour tag + blocked
 }
 
 /**

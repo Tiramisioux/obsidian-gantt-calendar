@@ -1,4 +1,5 @@
 import { type JSX } from 'react';
+import { ForkScopeBar } from '../fork/ScopeBar';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCalendarStore } from './store/calendarStore';
 import { ToolbarBar } from './components/Toolbar';
@@ -57,6 +58,7 @@ export function App(): JSX.Element {
 					style={{ overflow: isWaterfall ? 'auto' : undefined, height: '100%' }}
 				>
 					<ToolbarBar />
+					<ForkScopeBar />{/* fork: the open kontext/projekt */}
 					<AnimatePresence mode="wait" initial={false}>
 						{!isGantt ? (
 							<motion.div

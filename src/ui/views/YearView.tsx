@@ -15,7 +15,7 @@ import { i18n } from '../../i18n/i18n';
 export function YearView(): JSX.Element {
 	const plugin = usePlugin();
 	const currentDate = useCalendarStore((s) => s.currentDate);
-	const tasks = useCalendarStore((s) => s.tasks);
+	const tasks = useCalendarStore((s) => s.viewTasks); // fork: the open scope
 	const filter = useCalendarStore((s) => selectViewFilter(s, 'year'));
 	const setCurrentDate = useCalendarStore((s) => s.setCurrentDate);
 	const setViewType = useCalendarStore((s) => s.setViewType);

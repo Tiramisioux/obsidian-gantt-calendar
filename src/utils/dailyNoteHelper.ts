@@ -4,6 +4,7 @@
  * 处理 Daily Note 的检测、创建和任务插入逻辑
  */
 
+import { GC_PLUGIN_ID } from '../fork/pluginId';
 import { App, Notice, TFile, TFolder } from 'obsidian';
 import type { GanttCalendarSettings } from '../settings';
 import { i18n } from '../i18n/i18n';
@@ -300,7 +301,7 @@ async function insertTaskToFile(
  */
 function serializeNewTask(taskData: CreateTaskData, app: App): string {
 	// Access Obsidian internal plugin API (not in public types)
-	const plugin = (app as unknown as Record<string, Record<string, Record<string, unknown>>>).plugins.plugins['gantt-calendar'] as Record<string, unknown> | undefined;
+	const plugin = (app as unknown as Record<string, Record<string, Record<string, unknown>>>).plugins.plugins[GC_PLUGIN_ID] as Record<string, unknown> | undefined;
 	const settings = plugin?.settings as Record<string, unknown> | undefined;
 	const globalFilter: string = (settings?.globalTaskFilter as string) || '';
 	const enabledFormats: string[] = (settings?.enabledTaskFormats as string[]) || ['tasks'];

@@ -1,3 +1,4 @@
+import { GC_PLUGIN_ID } from '../../fork/pluginId';
 import { useCallback,  useEffect, useMemo, useRef, useState, type JSX  } from 'react';
 import { Notice } from 'obsidian';
 import type { App } from 'obsidian';
@@ -299,7 +300,7 @@ export function TaskFormModal({
 			return plugin?.taskCache.getAllTasks() || [];
 		}
 		const internal = (app as unknown as Record<string, Record<string, Record<string, unknown>>>).plugins
-			?.plugins?.['gantt-calendar'] as { taskCache?: { getAllTasks: () => GCTask[] } } | undefined;
+			?.plugins?.[GC_PLUGIN_ID] as { taskCache?: { getAllTasks: () => GCTask[] } } | undefined;
 		return internal?.taskCache?.getAllTasks() || [];
 	}, [mode, plugin, app]);
 

@@ -1,4 +1,6 @@
-import { Plugin, Notice, Platform, setIcon } from 'obsidian';
+import { Plugin, Notice, Platform, setIcon, TFile, TFolder, type TAbstractFile } from 'obsidian';
+import { scopeFor, applyScope, type Frontmatter } from './src/fork/scope';
+import type { GCTask } from './src/types';
 import { GCMainView, GC_VIEW_ID } from './src/GCMainView';
 import { GCSidebarView, GC_SIDEBAR_VIEW_ID } from './src/GCSidebarView';
 import { GanttCalendarSettingTab } from './src/settings';
@@ -90,6 +92,7 @@ export default class GanttCalendarPlugin extends Plugin {
 		this.registerUIElements();
 
 		registerAllCommands(this);
+		this.registerForkScope(); // fork: open the calendar on a note's kontext/projekt
 
 		this.addSettingTab(new GanttCalendarSettingTab(this.app, this));
 
@@ -148,6 +151,61 @@ export default class GanttCalendarPlugin extends Plugin {
 
 	async activateView(): Promise<void> {
 		return this.viewManager.activateView();
+	}
+
+	/**
+	 * fork: open the calendar on a note's kontext/projekt — the calendar twin
+	 * of the 3D graph fork's "Open in 3D graph" (same scope rules, see
+	 * src/fork/scope.ts). File menu (files + folders) and a command for the
+	 * active note (⌘⇧C); "Show all projects" or the chip's × clears it.
+	 */
+	private registerForkScope(): void {
+		this.registerEvent(
+			this.app.workspace.on('file-menu', (menu, file) => {
+				menu.addItem((item) =>
+					item
+						.setTitle('Open in Gantt calendar')
+						.setIcon('goal')
+						.onClick(() => void this.showInCalendar(file)),
+				);
+			}),
+		);
+		this.addCommand({
+			id: 'show-active-in-calendar',
+			name: "Open the active note's project in the calendar",
+			hotkeys: [{ modifiers: ['Mod', 'Shift'], key: 'C' }], // fork default; change in Settings → Hotkeys
+			checkCallback: (checking) => {
+				const file = this.app.workspace.getActiveFile();
+				if (!file) return false;
+				if (!checking) void this.showInCalendar(file);
+				return true;
+			},
+		});
+		this.addCommand({
+			id: 'show-all-in-calendar',
+			name: 'Show all projects in the calendar',
+			callback: () => {
+				useCalendarStore.getState().setForkScope(null, null);
+				void this.activateView();
+			},
+		});
+	}
+
+	/** fork: scope the calendar to `file`'s kontext/projekt and show it */
+	async showInCalendar(file: TAbstractFile): Promise<void> {
+		const fmOfFile = (f: TAbstractFile | null): Frontmatter =>
+			f instanceof TFile ? this.app.metadataCache.getFileCache(f)?.frontmatter : null;
+		const scope = scopeFor(file.path, file instanceof TFolder, fmOfFile(file));
+		const filter = (tasks: GCTask[]): GCTask[] => {
+			const cache = new Map<string, Frontmatter>();          // one lookup per note
+			const fmOf = (path: string): Frontmatter => {
+				if (!cache.has(path)) cache.set(path, fmOfFile(this.app.vault.getAbstractFileByPath(path)));
+				return cache.get(path);
+			};
+			return applyScope(tasks, scope, fmOf);
+		};
+		useCalendarStore.getState().setForkScope(scope, filter);
+		await this.activateView();
 	}
 
 	/**
@@ -248,7 +306,8 @@ export default class GanttCalendarPlugin extends Plugin {
 	}
 
 	private registerUIElements(): void {
-		const ribbonIconEl = this.addRibbonIcon('goal', '\u7518\u7279\u65E5\u5386', () => {
+		// fork: a Latin name (upstream hard-codes 甘特日历 whatever the language)
+		const ribbonIconEl = this.addRibbonIcon('goal', 'Gantt Calendar', () => {
 			void this.activateView();
 		});
 		ribbonIconEl.addClass('gantt-calendar-ribbon');

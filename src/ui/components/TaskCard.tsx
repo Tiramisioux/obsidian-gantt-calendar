@@ -1,3 +1,4 @@
+import { vaultColorOfTask, lightTint } from '../../fork/vaultColors';
 import { memo, useMemo, type CSSProperties, type JSX } from 'react';
 import type { GCTask } from '../../types';
 import type { TaskCardConfig } from '../../components/TaskCard/TaskCardConfig';
@@ -86,12 +87,27 @@ export const TaskCard = memo(function TaskCard({ task, config, targetDate, onCli
 		else if (task.repeat) list.push(TaskCardClasses.modifiers.recurring);
 		list.push(task.completed ? TaskCardClasses.modifiers.completed : TaskCardClasses.modifiers.pending);
 		// 有任务状态（含已完成）时添加 task-with-status，激活 CSS 变量卡片着色
-		if (task.status) list.push('task-with-status');
+		// fork: a colour tag does the same, in the vault's row colours
+		const vault = vaultColorOfTask(task.tags);
+		if (task.status || vault) list.push('task-with-status');
+		if (vault) list.push('gc-task-card--vault');
+		if (task.forkBlocked) list.push('gc-task-card--blocked'); // fork: another project's #lila day
 		return list;
-	}, [config.viewModifier, config.variant, config.compact, virtual, task.repeat, task.completed, task.status]);
+	}, [config.viewModifier, config.variant, config.compact, virtual, task.repeat, task.completed, task.status, task.tags, task.forkBlocked]);
 
 	// ===== 状态颜色 =====
 	const style = useMemo<CSSProperties | undefined>(() => {
+		// fork: the colour tag wins over the status colour (the note shows the same)
+		const vault = vaultColorOfTask(task.tags);
+		if (vault) {
+			// blocked (another project's #lila day in a scoped calendar) → lighter tint
+			const c = task.forkBlocked ? lightTint(vault) : vault;
+			return {
+				'--task-bg-color': c.bg,
+				'--task-text-color': c.ink,
+				'--vault-ink': c.ink,
+			} as CSSProperties;
+		}
 		if (!task.status) return undefined;
 		const statuses = plugin.settings?.taskStatuses || DEFAULT_TASK_STATUSES;
 		const colors = getStatusColor(task.status, statuses, getCurrentThemeMode());
@@ -100,7 +116,7 @@ export const TaskCard = memo(function TaskCard({ task, config, targetDate, onCli
 			'--task-bg-color': colors.bg,
 			'--task-text-color': colors.text,
 		} as CSSProperties;
-	}, [task.status, plugin.settings]);
+	}, [task.status, task.tags, task.forkBlocked, plugin.settings]);
 
 	// ===== 富文本描述 =====
 	const description = useMemo(() => {
