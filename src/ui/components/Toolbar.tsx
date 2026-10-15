@@ -16,6 +16,7 @@ import { TagTreeFilter } from './TagTreeFilter';
 import { DropdownMenu, type MenuItemDef, type DropdownMenuSection } from './DropdownMenu';
 import type { DateFieldType, GanttCalendarSettings } from '../../settings/types';
 import { useIsNarrow } from '../utils/platform';
+import { forkTagTextOn, forkToggleTagText } from '../../fork/tagText'; // fork
 
 const VIEW_BUTTONS: Array<{ type: CalendarViewType; icon: string }> = [
 	{ type: 'day', icon: 'sun' },
@@ -321,6 +322,10 @@ export function ToolbarBar(): JSX.Element {
 								)}
 							</DropdownMenu>
 						</div>
+						<div className={ToolbarClasses.components.navButtons.group}>
+							{/* fork: tag text on/off — default off, only the colours */}
+							<ToolbarBtn icon="hash" label={forkTagTextOn(plugin.settings) ? 'Dölj taggtext (bara färger)' : 'Visa taggtext'} extra={forkTagTextOn(plugin.settings) ? 'is-active' : undefined} onClick={() => void forkToggleTagText(plugin)} />
+						</div>
 					</>
 				)}
 				{isCalendar && (
@@ -372,6 +377,10 @@ export function ToolbarBar(): JSX.Element {
 									<ToolbarBtn icon="tag" label={i18n.t('toolbar.tagFilter.ariaLabel')} ariaExpanded={expanded} onClick={onClick} />
 								)}
 							</DropdownMenu>
+						</div>
+						<div className={ToolbarClasses.components.navButtons.group}>
+							{/* fork: tag text on/off — default off, only the colours */}
+							<ToolbarBtn icon="hash" label={forkTagTextOn(plugin.settings) ? 'Dölj taggtext (bara färger)' : 'Visa taggtext'} extra={forkTagTextOn(plugin.settings) ? 'is-active' : undefined} onClick={() => void forkToggleTagText(plugin)} />
 						</div>
 
 						<div className={ToolbarClasses.components.navButtons.group}>

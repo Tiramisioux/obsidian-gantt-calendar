@@ -9,6 +9,9 @@ import { vaultColorOfTag, vaultColorOfTask, dayMarks, dayMarkBackground, dayMark
 import { scopeFor, applyScope } from '../src/fork/scope';
 import type { GCTask } from '../src/types';
 import { GC_PLUGIN_ID } from '../src/fork/pluginId';
+import { forkGanttOpensUnfiltered } from '../src/fork/viewDefaults';
+import { forkDisplayText } from '../src/fork/displayText';
+import { forkTagTextOn } from '../src/fork/tagText';
 import { App } from 'obsidian';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -71,14 +74,19 @@ describe('fork: vault colours', () => {
 		expect(vaultColorOfTask(undefined)).toBeNull();
 	});
 
-	it('day marks: lila then röd; one colour → plain, both → two stripes', () => {
+	it('day marks: one colour → plain; röd + lila on one day → lila only (the day is blocked)', () => {
 		expect(dayMarks([{ tags: ['röd'] }, { tags: ['blå'] }]).map((m) => m.color.key)).toEqual(['rod']);
 		const both = dayMarks([{ tags: ['röd', 'DOK'] }, { tags: ['lila'] }, { tags: undefined }]);
-		expect(both.map((m) => [m.color.key, m.light])).toEqual([['lila', false], ['rod', false]]);
+		expect(both.map((m) => [m.color.key, m.light])).toEqual([['lila', false]]);
 		expect(dayMarkBackground([{ color: VAULT_COLORS['lila'], light: false }])).toBe('#e6d9f6');
-		expect(dayMarkBackground(both)).toBe('linear-gradient(90deg, #e6d9f6 0% 50%, #f8d7da 50% 100%)');
+		expect(dayMarkBackground(both)).toBe('#e6d9f6');
 		expect(dayMarkBackground([])).toBeUndefined();
 		expect(dayMarkInk(both)).toBe('#5c3a78');
+		// another project's shoot (blocked) still outranks an own meeting
+		expect(dayMarks([{ tags: ['röd'] }, { tags: ['lila'], forkBlocked: true }]).map((m) => [m.color.key, m.light])).toEqual([['lila', true]]);
+		// stripes stay possible in principle (two marks of other kinds) — none today
+		expect(dayMarkBackground([{ color: VAULT_COLORS['lila'], light: false }, { color: VAULT_COLORS['röd'], light: false }]))
+			.toBe('linear-gradient(90deg, #e6d9f6 0% 50%, #f8d7da 50% 100%)');
 	});
 
 	it('a lila day from another project only (blocked) → the lighter tint', () => {
@@ -192,5 +200,54 @@ describe('fork: a scope replaces the saved tag filters without touching them', (
 		useCalendarStore.getState().setForkScope(null, null);
 		expect(selectViewFilter(useCalendarStore.getState(), 'month').tag.selectedTags).toEqual(['DOM_MUZYKA']);
 		expect(useCalendarStore.getState().viewTasks).toBe(useCalendarStore.getState().tasks);
+	});
+});
+
+
+describe('fork: gantt view opens on all tags', () => {
+	const saved: any = {
+		gantt: { status: { selectedStatuses: ['todo', 'done'] }, tag: { selectedTags: ['UND'], operator: 'OR' }, sort: { field: 'dueDate', order: 'asc' } },
+		month: { status: { selectedStatuses: ['todo', 'done'] }, tag: { selectedTags: ['DOK'], operator: 'OR' }, sort: { field: 'dueDate', order: 'asc' } },
+	};
+	it('drops the saved gantt tag selection, keeps operator/status/sort', () => {
+		const out: any = forkGanttOpensUnfiltered(saved);
+		expect(out.gantt.tag.selectedTags).toEqual([]);
+		expect(out.gantt.tag.operator).toBe('OR');
+		expect(out.gantt.status).toEqual(saved.gantt.status);
+	});
+	it('leaves the other views\' tag filters alone', () => {
+		expect((forkGanttOpensUnfiltered(saved) as any).month.tag.selectedTags).toEqual(['DOK']);
+	});
+	it('no saved filters / no gantt entry → unchanged', () => {
+		expect(forkGanttOpensUnfiltered(null)).toBeNull();
+		const noGantt: any = { month: saved.month };
+		expect(forkGanttOpensUnfiltered(noGantt)).toBe(noGantt);
+	});
+});
+
+
+describe('fork: sync id hidden in the calendar, kept in the line', () => {
+	it('strips (id:: …) from what is shown', () => {
+		expect(forkDisplayText('Arbetsmöte (id:: f0cc25)')).toBe('Arbetsmöte');
+		expect(forkDisplayText('möte (id:: ab12cd) med Johan')).toBe('möte med Johan');
+	});
+	it('leaves ordinary parentheses alone', () => {
+		expect(forkDisplayText('backup A (offline)')).toBe('backup A (offline)');
+	});
+	it('the parsed description keeps the id, so write-back keeps it', () => {
+		const LINE = '- [ ] Arbetsmöte #röd #UND [due:: 2026-10-16 10:00] (id:: f0cc25)';
+		const t = parseSingleTaskLine(LINE, 'n.md', 'n.md', 1, ['dataview'])!;
+		expect(t.description).toContain('(id:: f0cc25)');
+		expect(forkDisplayText(t.description)).toBe('Arbetsmöte');
+		expect(serializeTask(app, t, { dueDate: new Date(2026, 9, 17, 10, 0), datePrecision: { dueDate: 'time' } } as any, 'dataview')).toContain('(id:: f0cc25)');
+	});
+});
+
+
+describe('fork: calendar cards show only the colours', () => {
+	it('tag text is off unless switched on', () => {
+		expect(forkTagTextOn({})).toBe(false);
+		expect(forkTagTextOn(undefined)).toBe(false);
+		expect(forkTagTextOn({ forkShowTagText: true })).toBe(true);
 	});
 });

@@ -1,3 +1,4 @@
+import { forkToggleTagText } from './src/fork/tagText'; // fork
 import { Plugin, Notice, Platform, setIcon, TFile, TFolder, type TAbstractFile } from 'obsidian';
 import { scopeFor, applyScope, type Frontmatter } from './src/fork/scope';
 import type { GCTask } from './src/types';
@@ -191,6 +192,11 @@ export default class GanttCalendarPlugin extends Plugin {
 				if (!checking) void this.showInCalendar(file);
 				return true;
 			},
+		});
+		this.addCommand({
+			id: 'toggle-tag-text', // fork: only the colours unless toggled on
+			name: 'Visa/dölj taggtext i kalendern',
+			callback: () => void forkToggleTagText(this),
 		});
 		this.addCommand({
 			id: 'show-all-in-calendar',

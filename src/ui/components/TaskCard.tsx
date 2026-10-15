@@ -28,6 +28,8 @@ import { setTaskStatus } from '../../contextMenu/commands/setTaskStatus';
 import { setTaskPriority } from '../../contextMenu/commands/setPriority';
 import { i18n } from '../../i18n/i18n';
 import { Logger } from '../../utils/logger';
+import { forkDisplayText } from '../../fork/displayText'; // fork
+import { forkTagTextOn } from '../../fork/tagText'; // fork
 
 export interface ReactTaskCardProps {
 	task: GCTask;
@@ -133,7 +135,7 @@ export const TaskCard = memo(function TaskCard({ task, config, targetDate, onCli
 		return (
 			<div className={textCls.join(' ')} style={style}>
 				{plugin.settings.showGlobalFilterInTaskText && gf ? `${gf} ` : ''}
-				<DescriptionWithLinks text={task.description} app={app} />
+				<DescriptionWithLinks text={forkDisplayText(task.description)} app={app} /> {/* fork: sync id hidden */}
 			</div>
 		);
 	}, [config.showDescription, config.maxLines, plugin.settings, task.description, app]);
@@ -370,7 +372,7 @@ export const TaskCard = memo(function TaskCard({ task, config, targetDate, onCli
 		);
 	})();
 
-	const tags = config.showTags && task.tags && task.tags.length > 0 ? (
+	const tags = config.showTags && forkTagTextOn(plugin.settings) && task.tags && task.tags.length > 0 ? ( // fork: only colours unless toggled on
 		<div className={TaskCardClasses.elements.tags}>
 			{task.tags.map((t) => (
 				<TagPillSpan key={t} label={t} showHash />

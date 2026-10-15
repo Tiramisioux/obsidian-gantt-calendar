@@ -1,7 +1,7 @@
 {
 	"id": "gantt-calendar-tiramisioux",
 	"name": "Gantt Calendar (Tiramisioux)",
-	"version": "1.6.2-tiramisioux.3",
+	"version": "1.6.2-tiramisioux.4",
 	"minAppVersion": "1.13.0",
 	"description": "Fork of Gantt Calendar by Sugar: tags in any script (å ä ö), the vault's colour tags as task colours, month-view day marks for meetings and shooting days. A powerful visual task management plugin. Visualize and manage tasks created by the Tasks plugin, supporting both emoji and Dataview task formats. Support Feishu Task syncing. Support Gantt chart and calendar views.",
 	"author": "Sugar",

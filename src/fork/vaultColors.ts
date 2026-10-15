@@ -65,16 +65,18 @@ export interface DayMark {
 	light: boolean;
 }
 
-/** The day marks for a day's tasks: the DAY_MARK_TAGS present, in that order. */
+/** The day marks for a day's tasks: the DAY_MARK_TAGS present, in that order.
+ *  fork (user, 2026-10-15): a day with both a #röd and a #lila task becomes
+ *  **lila** — a shooting day blocks the whole day — so lila wins, no stripes. */
 export function dayMarks(tasks: ReadonlyArray<{ tags?: readonly string[] | null; forkBlocked?: boolean }>): DayMark[] {
 	const own = new Set<string>();
 	const blocked = new Set<string>();
 	for (const task of tasks) {
 		for (const t of task.tags ?? []) (task.forkBlocked ? blocked : own).add(normTag(t));
 	}
-	return DAY_MARK_TAGS
-		.filter((t) => own.has(t) || blocked.has(t))
-		.map((t) => ({ color: VAULT_COLORS[t], light: !own.has(t) }));
+	const present = DAY_MARK_TAGS.filter((t) => own.has(t) || blocked.has(t));
+	const winners = present.includes('lila') ? present.filter((t) => t !== 'rod' && t !== 'röd') : present;
+	return winners.map((t) => ({ color: VAULT_COLORS[t], light: !own.has(t) }));
 }
 
 /** CSS background for a marked date field: one colour, or equal hard stripes. */

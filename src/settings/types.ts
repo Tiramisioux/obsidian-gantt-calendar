@@ -124,6 +124,8 @@ export interface GanttCalendarSettings {
 	viewFilters?: Record<ViewScope, ViewFilterState>;
 	/** fork: views still on the old default status filter (['todo']) were given 'done' once */
 	forkDoneByDefault?: boolean;
+	/** fork: show tag text (pills) on calendar cards — default off, only the colours */
+	forkShowTagText?: boolean;
 }
 
 /**

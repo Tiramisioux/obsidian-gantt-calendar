@@ -12,6 +12,7 @@ import {
 	DEFAULT_TAG_FILTER_STATE,
 	DEFAULT_STATUS_FILTER_STATE,
 } from '../../types';
+import { forkGanttOpensUnfiltered } from '../../fork/viewDefaults'; // fork
 
 export type ViewScope = 'year' | 'month' | 'week' | 'day' | 'task' | 'gantt' | 'sidebar';
 
@@ -192,7 +193,7 @@ export const useCalendarStore = create<CalendarStoreState>((set) => ({
 	hydrateViewFilters: (filters) =>
 		set((s) => ({
 			// 水合时按当前任务集剔除幽灵标签；任务集未就绪（空）时不动，待任务到来再剔除
-			viewFilters: pruneTagFilters(mergeViewFilters(filters), s.tasks),
+			viewFilters: pruneTagFilters(mergeViewFilters(forkGanttOpensUnfiltered(filters)), s.tasks), // fork: gantt opens on all tags
 		})),
 
 	setStatusFilter: (scope, status) =>
