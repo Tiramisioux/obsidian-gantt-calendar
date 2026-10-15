@@ -9,7 +9,7 @@ import { vaultColorOfTag, vaultColorOfTask, dayMarks, dayMarkBackground, dayMark
 import { scopeFor, applyScope } from '../src/fork/scope';
 import type { GCTask } from '../src/types';
 import { GC_PLUGIN_ID } from '../src/fork/pluginId';
-import { forkGanttOpensUnfiltered } from '../src/fork/viewDefaults';
+import { forkOpenUnfiltered } from '../src/fork/viewDefaults';
 import { forkDisplayText } from '../src/fork/displayText';
 import { forkTagTextOn } from '../src/fork/tagText';
 import { App } from 'obsidian';
@@ -204,27 +204,25 @@ describe('fork: a scope replaces the saved tag filters without touching them', (
 });
 
 
-describe('fork: gantt view opens on all tags', () => {
-	const saved: any = {
-		gantt: { status: { selectedStatuses: ['todo', 'done'] }, tag: { selectedTags: ['UND'], operator: 'OR' }, sort: { field: 'dueDate', order: 'asc' } },
-		month: { status: { selectedStatuses: ['todo', 'done'] }, tag: { selectedTags: ['DOK'], operator: 'OR' }, sort: { field: 'dueDate', order: 'asc' } },
-	};
-	it('drops the saved gantt tag selection, keeps operator/status/sort', () => {
-		const out: any = forkGanttOpensUnfiltered(saved);
+describe('fork: gantt and month views open on all tags', () => {
+	const f = (tags: string[]): any => ({ status: { selectedStatuses: ['todo', 'done'] }, tag: { selectedTags: tags, operator: 'OR' }, sort: { field: 'dueDate', order: 'asc' } });
+	const saved: any = { gantt: f(['UND']), month: f(['NORDKAPAREN', 'DOK', 'UND']), week: f(['DOK']) };
+	it('drops the saved gantt and month tag selections, keeps operator/status/sort', () => {
+		const out: any = forkOpenUnfiltered(saved);
 		expect(out.gantt.tag.selectedTags).toEqual([]);
-		expect(out.gantt.tag.operator).toBe('OR');
-		expect(out.gantt.status).toEqual(saved.gantt.status);
+		expect(out.month.tag.selectedTags).toEqual([]);
+		expect(out.month.tag.operator).toBe('OR');
+		expect(out.month.status).toEqual(saved.month.status);
 	});
 	it('leaves the other views\' tag filters alone', () => {
-		expect((forkGanttOpensUnfiltered(saved) as any).month.tag.selectedTags).toEqual(['DOK']);
+		expect((forkOpenUnfiltered(saved) as any).week.tag.selectedTags).toEqual(['DOK']);
 	});
-	it('no saved filters / no gantt entry → unchanged', () => {
-		expect(forkGanttOpensUnfiltered(null)).toBeNull();
-		const noGantt: any = { month: saved.month };
-		expect(forkGanttOpensUnfiltered(noGantt)).toBe(noGantt);
+	it('no saved filters / nothing selected → unchanged', () => {
+		expect(forkOpenUnfiltered(null)).toBeNull();
+		const clean: any = { gantt: f([]), week: f(['DOK']) };
+		expect(forkOpenUnfiltered(clean)).toBe(clean);
 	});
 });
-
 
 describe('fork: sync id hidden in the calendar, kept in the line', () => {
 	it('strips (id:: …) from what is shown', () => {
