@@ -17,6 +17,7 @@ A fork of [Gantt Calendar](https://github.com/sustcsugar/obsidian-gantt-calendar
 | **Gantt and month open on all tags** | The gantt and month views always start unfiltered — no tag selected = every tag shown. A tag you pick there filters for the session but isn't restored at the next start (upstream kept the last selection, so a view could open on one project). The other views keep their saved tag filters. |
 | **Sync id hidden** | The calendar bridge's hidden `(id:: a1b2c3)` on a todo line is not shown in cards, tooltips, drag chips or gantt bar names. Display only: every write-back (tick, drag, resize, edit) keeps it, or the Obsidian ↔ Apple Calendar sync would lose the todo. |
 | **Only the colours on cards** | Calendar cards show the task text in its colour, without tag pills (`#röd`, `#UND` …). The **#** button in the toolbar (task list and calendar views) or the command **Visa/dölj taggtext i kalendern** brings the tag text back — then each view's own *show tags* setting applies. Tooltips always list the tags. |
+| **Follows the vault's tree contract** | *Open in Gantt calendar* reads the vault's tree from `.obsidian/vault-struktur.json` (areas `01_HEM/`, `02_PROJEKT/`, `03_RISE/`, an `_archive/` per kontext) through the vendored library `src/fork/vault_struktur.js`, so the folder layout is no longer written into the plugin. Archived projects (and whole archived kontexts) scope exactly like active ones. Without the contract file the command shows a notice and does nothing. |
 | **Latin ribbon name** | The ribbon icon says *Gantt Calendar* (upstream: 甘特日历 whatever the language). |
 
 ### The colours
@@ -37,14 +38,14 @@ The first colour tag on a line decides. Defined in `src/fork/vaultColors.ts` and
 
 | Opened from | The calendar shows |
 |---|---|
-| a project folder `03_PROJEKTPLANERING/<CTX>/<PROJ>` (or anything inside it) | project `<PROJ>` |
-| a context folder `03_PROJEKTPLANERING/<CTX>` | context `<CTX>` |
+| a project folder `01_HEM/<PROJ>`, `03_RISE/<PROJ>` or `02_PROJEKT/<CTX>/<PROJ>` (or anything inside it), also under `_archive/` | project `<PROJ>` |
+| a kontext folder: `01_HEM`, `03_RISE`, or a kontext folder of `02_PROJEKT` (`02_PROJEKT/<CTX>`, also `02_PROJEKT/_archive/<CTX>`) | context `<CTX>` |
 | a note with `projekt: "#PROJ"` (hub, subproject note, clipping, person hub) | project `PROJ` |
 | a note inside a project folder without `projekt` | that project |
-| a note with only `kontext:` | that context |
+| a note at kontext level (`<kontext folder>/notes/…`, `_inbox.md`) or with only `kontext:` | that context |
 | any other folder / note | the tasks in it |
 
-A task belongs to project `P` when it is tagged `#P` or `#P/<sub>`, or its note has `projekt: "#P…"` / `delprojekt: "#P/…"`, or it lives in `P`'s folder. Context `C`: `#C`, `kontext: C`, or the context folder. Same rules as the 3D graph fork's *Open in 3D graph*. While a scope is open, the tag filters you had saved are set aside (not changed) — pick a tag to narrow inside the scope; after × your filters are back.
+A task belongs to project `P` when it is tagged `#P` or `#P/<sub>`, or its note has `projekt: "#P…"` / `delprojekt: "#P/…"`, or its path resolves to `P` (its folder, archived or not). Context `C`: `#C`, `kontext: C`, or a path that resolves to the kontext. Same rules as the 3D graph fork's *Open in 3D graph*. While a scope is open, the tag filters you had saved are set aside (not changed) — pick a tag to narrow inside the scope; after × your filters are back.
 
 ## Install / update
 
@@ -59,7 +60,7 @@ npx jest               # upstream suite + tests/fork.test.ts
 cp main.js manifest.json styles.css "<vault>/.obsidian/plugins/gantt-calendar-tiramisioux/"
 ```
 
-Fork code is marked `fork:`; the fork's own files are `src/fork/` (`vaultColors.ts`, `scope.ts`, `pluginId.ts`, `ScopeBar.tsx`), `src/styles/fork.css`, `tests/fork.test.ts`. Live testing against a running Obsidian (`--remote-debugging-port=9222`): `node scripts/dev/cdp.mjs '<js>'`, `node scripts/dev/shot.mjs out.png`.
+Fork code is marked `fork:`; the fork's own files are `src/fork/` (`vaultColors.ts`, `scope.ts`, `pluginId.ts`, `ScopeBar.tsx`, and `vault_struktur.js` + `.d.ts` — a byte copy of `obsidian-vault-functions/lib/vault_struktur.js`, never edited here; `tests/fixtures/vault_struktur_cases.json` is the shared case file), `src/styles/fork.css`, `tests/fork.test.ts`. Live testing against a running Obsidian (`--remote-debugging-port=9222`): `node scripts/dev/cdp.mjs '<js>'`, `node scripts/dev/shot.mjs out.png`.
 
 ---
 
