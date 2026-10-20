@@ -1,6 +1,7 @@
 import { forkToggleTagText } from './src/fork/tagText'; // fork
 import { Plugin, Notice, Platform, setIcon, TFile, TFolder, type TAbstractFile } from 'obsidian';
-import { scopeFor, applyScope, type Frontmatter } from './src/fork/scope';
+import { scopeFor, applyScope, type Frontmatter } from './src/fork/scope'; // fork
+import VaultStruktur from './src/fork/vault_struktur'; // fork: the vault tree contract (vendored library)
 import type { GCTask } from './src/types';
 import { GCMainView, GC_VIEW_ID } from './src/GCMainView';
 import { GCSidebarView, GC_SIDEBAR_VIEW_ID } from './src/GCSidebarView';
@@ -35,6 +36,8 @@ export default class GanttCalendarPlugin extends Plugin {
 	/** 视图筛选写回防抖句柄，onunload 时冲刷 */
 	private viewFiltersSaveTimer: number | null = null;
 	dailyNoteIndex: DailyNoteIndex;
+	/** fork: the parsed .obsidian/vault-struktur.json (null while the vault has none) */
+	private forkContract: VaultStruktur.Config | null = null;
 
 	private settingsManager: SettingsManager;
 	private themeManager: ThemeManager;
@@ -104,6 +107,7 @@ export default class GanttCalendarPlugin extends Plugin {
 		this.registerUIElements();
 
 		registerAllCommands(this);
+		this.forkContract = await this.readForkContract(); // fork: the tree contract, read at load
 		this.registerForkScope(); // fork: open the calendar on a note's kontext/projekt
 
 		this.addSettingTab(new GanttCalendarSettingTab(this.app, this));
@@ -208,18 +212,44 @@ export default class GanttCalendarPlugin extends Plugin {
 		});
 	}
 
+	/** fork: read .obsidian/vault-struktur.json; null when it is missing or not JSON */
+	private async readForkContract(): Promise<VaultStruktur.Config | null> {
+		try {
+			return JSON.parse(await this.app.vault.adapter.read(this.app.vault.configDir + '/vault-struktur.json'));
+		} catch {
+			return null;
+		}
+	}
+
 	/** fork: scope the calendar to `file`'s kontext/projekt and show it */
 	async showInCalendar(file: TAbstractFile): Promise<void> {
+		// fork: scoping needs the tree contract (read once more when it was missing at load)
+		this.forkContract = this.forkContract ?? await this.readForkContract();
+		if (!this.forkContract) {
+			new Notice('vault-struktur.json saknas — väntar på omstruktureringen');
+			return;
+		}
+		const listDir = (rel: string): VaultStruktur.DirEntry[] | null => {
+			const f = rel ? this.app.vault.getAbstractFileByPath(rel) : this.app.vault.getRoot();
+			return f instanceof TFolder ? f.children.map((c) => ({ name: c.name, dir: c instanceof TFolder })) : null;
+		};
+		let vs: VaultStruktur.Struktur;
+		try {
+			vs = VaultStruktur.from_config(this.forkContract, listDir);
+		} catch (e) {
+			new Notice(e instanceof Error ? e.message : String(e));
+			return;
+		}
 		const fmOfFile = (f: TAbstractFile | null): Frontmatter =>
 			f instanceof TFile ? this.app.metadataCache.getFileCache(f)?.frontmatter : null;
-		const scope = scopeFor(file.path, file instanceof TFolder, fmOfFile(file));
+		const scope = scopeFor(file.path, file instanceof TFolder, fmOfFile(file), vs);
 		const filter = (tasks: GCTask[]): GCTask[] => {
 			const cache = new Map<string, Frontmatter>();          // one lookup per note
 			const fmOf = (path: string): Frontmatter => {
 				if (!cache.has(path)) cache.set(path, fmOfFile(this.app.vault.getAbstractFileByPath(path)));
 				return cache.get(path);
 			};
-			return applyScope(tasks, scope, fmOf);
+			return applyScope(tasks, scope, fmOf, vs);
 		};
 		useCalendarStore.getState().setForkScope(scope, filter);
 		await this.activateView();
